@@ -28,8 +28,8 @@ class RoutesController < ApplicationController
   end
 
   def commit
-    if RouterReloader.reload
-      render :text => "Router reloaded"
+    if RouterReloaderWorker.perform_async
+      render :text => "Router reload queued", :status => 202
     else
       render :text => "Failed to reload all routers", :status => 500
     end

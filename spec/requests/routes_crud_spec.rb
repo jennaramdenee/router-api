@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'sidekiq/testing'
 
 RSpec.describe "managing routes", :type => :request do
   describe "fetching details of a route" do
@@ -151,23 +152,20 @@ RSpec.describe "managing routes", :type => :request do
   end
 
   describe "committing the routes" do
-    before :each do
+    it "should queue a reload on the router, and return 202" do
+      Sidekiq::Testing.fake!
+
+      post "/routes/commit"
+      expect(response.code.to_i).to eq(202)
+      expect(RouterReloaderWorker.jobs.size).to eq(1)
+    end
+
+    it "should purge the routes when a queue is processed" do
+      Sidekiq::Testing.inline!
       setup_router_reload_http_stub
-    end
 
-    it "should trigger a reload on the router, and return success" do
       post "/routes/commit"
-      expect(response.code.to_i).to eq(200)
-
       expect(router_reload_http_stub).to have_been_requested
-    end
-
-    it "should return an error if reloading fails" do
-      stub_router_reload_error
-
-      post "/routes/commit"
-      expect(response.code.to_i).to eq(500)
-      expect(response.body).to eq("Failed to reload all routers")
     end
   end
 end
