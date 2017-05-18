@@ -124,7 +124,6 @@ class Route
 
   def validate_external_target(target)
     uri = URI.parse(target)
-    puts "#{target} #{uri.host}"
     errors[:redirect_to] << "must be an absolute URI" unless uri.absolute?
 
     return unless errors[:redirect_to].empty? # Don't continue, as the
